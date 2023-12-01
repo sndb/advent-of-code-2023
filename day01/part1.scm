@@ -1,12 +1,6 @@
 (import (srfi 1)
         (ice-9 rdelim))
 
-(define (has-prefix? p l)
-  (or (null? p)
-      (and (pair? l)
-           (equal? (car p) (car l))
-           (has-prefix? (cdr p) (cdr l)))))
-
 (define (digits l)
   (cond
    [(null? l) '()]

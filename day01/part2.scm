@@ -8,29 +8,25 @@
            (has-prefix? (cdr p) (cdr l)))))
 
 (define numbers
-  '((1 . "one")
-    (2 . "two")
-    (3 . "three")
-    (4 . "four")
-    (5 . "five")
-    (6 . "six")
-    (7 . "seven")
-    (8 . "eight")
-    (9 . "nine")))
+  (map cons
+       (iota 9 1)
+       '("one" "two" "three"
+         "four" "five" "six"
+         "seven" "eight" "nine")))
 
 (define (digits l)
   (cond
    [(null? l) '()]
+   [(char-numeric? (car l))
+    (let ([d (- (char->integer (car l))
+                (char->integer #\0))])
+      (cons d (digits (cdr l))))]
    [(find (lambda (a)
             (let ([p (string->list (cdr a))])
               (has-prefix? p l)))
           numbers)
     => (lambda (a)
          (cons (car a) (digits (cdr l))))]
-   [(char-numeric? (car l))
-    (let ([d (- (char->integer (car l))
-                (char->integer #\0))])
-      (cons d (digits (cdr l))))]
    [else (digits (cdr l))]))
 
 (let lp ([n 0])
