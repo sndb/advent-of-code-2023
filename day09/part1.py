@@ -1,22 +1,10 @@
-data = [[int(x) for x in l.split()] for l in open(0)]
-
-
-def next_seq(s):
-    return [s[i + 1] - s[i] for i in range(len(s) - 1)]
-
-
 def extrapolate(s):
-    if set(s) == {0}:
-        return s + [0]
-    e = extrapolate(next_seq(s))
-    t = s[-1] + e[-1]
-    return s + [t]
+    if len(set(s)) == 0:
+        return 0
+    t = [s[i + 1] - s[i] for i in range(len(s) - 1)]
+    e = extrapolate(t)
+    return s[-1] + e
 
 
-a = 0
-
-for s in data:
-    e = extrapolate(s)
-    a += e[-1]
-
-print(a)
+data = [[int(x) for x in l.split()] for l in open(0)]
+print(sum([extrapolate(s) for s in data]))
