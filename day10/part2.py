@@ -30,7 +30,19 @@ def walk(r, c):
     return dists
 
 
+def area(loop):
+    a = 0
+    for r in range(len(grid)):
+        inside = False
+        for c in range(len(grid[0])):
+            if (r, c) in loop and grid[r][c] in "|LJ":
+                inside = not inside
+            if (r, c) not in loop and inside:
+                a += 1
+    return a
+
+
 for r in range(len(grid)):
     for c in range(len(grid[0])):
         if grid[r][c] == "S":
-            print(max(walk(r, c).values()))
+            print(area(walk(r, c).keys()))
