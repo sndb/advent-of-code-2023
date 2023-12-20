@@ -1,39 +1,28 @@
-from collections import defaultdict, deque
+from heapq import heappop, heappush
 
 grid = [list(map(int, l)) for l in open(0).read().splitlines()]
+queue = [(0, 0, 0, 0, 0, 0)]
+seen = set()
 
+while queue:
+    w, r, c, dr, dc, n = heappop(queue)
 
-def walk(src, dst):
-    costs = defaultdict(lambda: float("inf"))
-    queue = deque([(src, (0, 0), 0, 0)])
-    res = float("inf")
-    while queue:
-        curr, prev, run, cost = queue.pop()
-        if run > 3:
+    if (r, c) == (len(grid) - 1, len(grid[0]) - 1):
+        print(w)
+        break
+
+    if (r, c, dr, dc, n) in seen:
+        continue
+    seen.add((r, c, dr, dc, n))
+
+    for ndr, ndc in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+        nr, nc = r + ndr, c + ndc
+        if nr < 0 or nr >= len(grid) or nc < 0 or nc >= len(grid[0]):
             continue
 
-        k = (curr, prev, run)
-        if costs[k] <= cost:
-            continue
-        costs[k] = cost
-
-        if curr == dst and cost < res:
-            res = cost
-            continue
-
-        dprev = (curr[0] - prev[0], curr[1] - prev[1])
-        for dsucc in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-            succ = (curr[0] + dsucc[0], curr[1] + dsucc[1])
-            if succ == prev:
-                continue
-            if succ[0] < 0 or succ[0] >= len(grid):
-                continue
-            if succ[1] < 0 or succ[1] >= len(grid[0]):
-                continue
-            csucc = cost + grid[succ[0]][succ[1]]
-            rsucc = 1 + (run if dsucc == dprev else 0)
-            queue.appendleft((succ, curr, rsucc, csucc))
-    return res
-
-
-print(walk((0, 0), (len(grid) - 1, len(grid[0]) - 1)))
+        nw = w + grid[nr][nc]
+        if (dr, dc) == (ndr, ndc):
+            if n < 3:
+                heappush(queue, (nw, nr, nc, ndr, ndc, n + 1))
+        elif (-dr, -dc) != (ndr, ndc):
+            heappush(queue, (nw, nr, nc, ndr, ndc, 1))
