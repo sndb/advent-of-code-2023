@@ -1,23 +1,29 @@
+import sys
+
+sys.setrecursionlimit(10000)
+
 grid = open(0).read().splitlines()
+seen = [[False for _ in range(len(grid[0]))] for _ in range(len(grid))]
 dest = (140, 139)
-queue = [(0, 0, 1, tuple())]
 answer = 0
 
-while queue:
-    d, r, c, path = queue.pop()
+
+def dfs(r, c, d):
+    global answer
 
     if (r, c) == dest:
         answer = max(answer, d)
-        continue
+        return
 
-    if (r, c) in path:
-        continue
-    path += ((r, c),)
+    if seen[r][c]:
+        return
+
+    seen[r][c] = True
 
     if grid[r][c] == ">":
-        queue.append((d + 1, r, c + 1, path))
+        dfs(r, c + 1, d + 1)
     elif grid[r][c] == "v":
-        queue.append((d + 1, r + 1, c, path))
+        dfs(r + 1, c, d + 1)
     else:
         for nr, nc in [(r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)]:
             if (
@@ -27,6 +33,10 @@ while queue:
                 and nc < len(grid[0])
                 and grid[nr][nc] != "#"
             ):
-                queue.append((d + 1, nr, nc, path))
+                dfs(nr, nc, d + 1)
 
+    seen[r][c] = False
+
+
+dfs(0, 1, 0)
 print(answer)

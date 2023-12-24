@@ -71,22 +71,28 @@ def neighbors(r0, c0):
     return res
 
 
-queue = [(0, 0, 1, tuple())]
+seen = [[False for _ in range(len(grid[0]))] for _ in range(len(grid))]
 answer = 0
 
-while queue:
-    d, r, c, path = queue.pop()
+
+def dfs(r, c, d):
+    global answer
 
     if (r, c) == dest:
         answer = max(answer, d)
-        continue
+        return
 
-    if (r, c) in path:
-        continue
-    path += ((r, c),)
+    if seen[r][c]:
+        return
+
+    seen[r][c] = True
 
     for nr, nc in neighbors(r, c):
         nd = d + distance((r, c), (nr, nc))
-        queue.append((nd, nr, nc, path))
+        dfs(nr, nc, nd)
 
+    seen[r][c] = False
+
+
+dfs(0, 1, 0)
 print(answer)
