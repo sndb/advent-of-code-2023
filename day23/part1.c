@@ -1,16 +1,16 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#define N 20000
+#define LEN(x) (sizeof(x) / sizeof((x)[0]))
 
-char grid[N];
+char grid[65536];
 int rows, cols, goal;
 int answer = 0;
 
 void
 search(int p, int dist)
 {
-	static bool seen[N];
+	static bool seen[LEN(grid)];
 
 	if (p == goal) {
 		if (dist > answer)

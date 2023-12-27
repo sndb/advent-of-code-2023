@@ -1,12 +1,13 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#define N 20000
+#define LEN(x) (sizeof(x) / sizeof((x)[0]))
 #define DIFF ((int[4]){cols, -cols, 1, -1})
 
-char grid[N];
+char grid[65536];
 int rows, cols, goal;
 
 bool
@@ -29,32 +30,41 @@ passage(int p)
 	return a > 2;
 }
 
+struct distmap_node {
+	struct distmap_node *next;
+	int p, q;
+	int dist;
+};
+
+struct distmap_node *distmap[1009] = {0};
+
 int
 distance(int p, int q)
 {
-	static int cache[N][N];
-
-	int res = cache[p][q];
-	if (res)
-		return res;
+	int hash = (p + q * 3) % LEN(distmap);
+	struct distmap_node *dmn;
+	for (dmn = distmap[hash]; dmn != NULL; dmn = dmn->next)
+		if (dmn->p == p && dmn->q == q)
+			return dmn->dist;
 
 	struct state {
 		int pos;
 		int dist;
 	} stack[1024] = {{p, 0}};
 
-	bool seen[N] = {false};
+	bool seen[LEN(grid)] = {0};
+	int maxdist = 0;
 	int k = 1;
 	while (k > 0) {
-		assert(k < sizeof(stack) / sizeof(*stack));
+		assert(k < LEN(stack));
 
 		k--;
 		int r = stack[k].pos;
-		int d = stack[k].dist;
+		int dist = stack[k].dist;
 
 		if (r == q) {
-			if (d > res)
-				res = d;
+			if (dist > maxdist)
+				maxdist = dist;
 			continue;
 		}
 
@@ -69,29 +79,35 @@ distance(int p, int q)
 			int s = r + DIFF[i];
 			if (valid(s)) {
 				stack[k].pos = s;
-				stack[k].dist = d + 1;
+				stack[k].dist = dist + 1;
 				k++;
 			}
 		}
 	}
-	cache[p][q] = res;
-	return res;
+
+	dmn = malloc(sizeof(*dmn));
+	dmn->p = p;
+	dmn->q = q;
+	dmn->dist = maxdist;
+	dmn->next = distmap[hash];
+	distmap[hash] = dmn;
+	return maxdist;
 }
 
 int
 neighbors(int p, int **res)
 {
-	static int cache[N][5];
+	static int cache[LEN(grid)][5];
 
 	if (*cache[p])
 		goto ret;
 
-	bool seen[N] = {false};
+	bool seen[LEN(grid)] = {0};
 	int stack[1024] = {p};
 	int k = 1;
 	int n = 0;
 	while (k > 0) {
-		assert(k < sizeof(stack) / sizeof(*stack));
+		assert(k < LEN(stack));
 
 		k--;
 		int q = stack[k];
@@ -122,7 +138,7 @@ int answer = 0;
 void
 search(int p, int d)
 {
-	static bool seen[N];
+	static bool seen[LEN(grid)];
 
 	if (p == goal) {
 		if (d > answer)
