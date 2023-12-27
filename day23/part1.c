@@ -4,17 +4,17 @@
 #define N 20000
 
 char grid[N];
-int rows = 0;
-int cols = 0;
-
-bool seen[N] = {false};
+int rows, cols, goal;
 int answer = 0;
 
-void search(int p, int d)
+void
+search(int p, int dist)
 {
-	if (p == rows * cols - 2) {
-		if (d > answer)
-			answer = d;
+	static bool seen[N];
+
+	if (p == goal) {
+		if (dist > answer)
+			answer = dist;
 		return;
 	}
 
@@ -23,36 +23,38 @@ void search(int p, int d)
 	seen[p] = true;
 
 	if (grid[p] == '>') {
-		search(p + 1, d + 1);
+		search(p + 1, dist + 1);
 	} else if (grid[p] == 'v') {
-		search(p + cols, d + 1);
+		search(p + cols, dist + 1);
 	} else {
 		int diff[4] = {cols, -cols, 1, -1};
 		for (int i = 0; i < 4; i++) {
 			int np = p + diff[i];
 			if (np >= 0 && np < rows * cols && grid[np] != '#')
-				search(np, d + 1);
+				search(np, dist + 1);
 		}
 	}
 	seen[p] = false;
 }
 
-void prepare(void)
+void
+init(void)
 {
-	int i = 0;
-	for (int c; (c = getchar()) != EOF;) {
-		grid[i++] = c;
-		if (c == '\n') {
-			i--;
-			rows++;
-		}
-	}
-	cols = i / rows;
+	int i = 0, r = 0, c;
+	while ((c = getchar()) != EOF)
+		if (c == '\n')
+			r++;
+		else
+			grid[i++] = c;
+	rows = r;
+	cols = i / r;
+	goal = rows * cols - 2;
 }
 
-int main(void)
+int
+main(void)
 {
-	prepare();
+	init();
 	search(1, 0);
 	printf("%d\n", answer);
 	return 0;

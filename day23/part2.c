@@ -5,25 +5,20 @@
 
 #define N 20000
 #define DIFF ((int[4]){cols, -cols, 1, -1})
-#define LEN(x) (sizeof(x) / sizeof(*x))
 
 char grid[N];
-int rows = 0;
-int cols = 0;
+int rows, cols, goal;
 
-bool valid(int p)
+bool
+valid(int p)
 {
 	return p >= 0 && p < rows * cols && grid[p] != '#';
 }
 
-bool goal(int p)
+bool
+passage(int p)
 {
-	return p == rows * cols - 2;
-}
-
-bool passage(int p)
-{
-	if (goal(p))
+	if (p == goal)
 		return true;
 
 	int a = 0;
@@ -34,25 +29,28 @@ bool passage(int p)
 	return a > 2;
 }
 
-int distance_cache[N][N] = {0};
-
-int distance(int p, int q)
+int
+distance(int p, int q)
 {
-	int c = distance_cache[p][q];
-	if (c)
-		return c;
+	static int cache[N][N];
+
+	int res = cache[p][q];
+	if (res)
+		return res;
+
+	struct state {
+		int pos;
+		int dist;
+	} stack[1024] = {{p, 0}};
 
 	bool seen[N] = {false};
-	int pqueue[1024] = {p};
-	int dqueue[LEN(pqueue)] = {0};
 	int k = 1;
-	int res = 0;
 	while (k > 0) {
-		assert(k < LEN(pqueue));
+		assert(k < sizeof(stack) / sizeof(*stack));
 
 		k--;
-		int r = pqueue[k];
-		int d = dqueue[k];
+		int r = stack[k].pos;
+		int d = stack[k].dist;
 
 		if (r == q) {
 			if (d > res)
@@ -70,64 +68,63 @@ int distance(int p, int q)
 		for (int i = 0; i < 4; i++) {
 			int s = r + DIFF[i];
 			if (valid(s)) {
-				pqueue[k] = s;
-				dqueue[k] = d + 1;
+				stack[k].pos = s;
+				stack[k].dist = d + 1;
 				k++;
 			}
 		}
 	}
-	distance_cache[p][q] = res;
+	cache[p][q] = res;
 	return res;
 }
 
-int neighbors_cache[N][4];
-int neighbors_cache_len[N] = {0};
-
-int neighbors(int p, int *res)
+int
+neighbors(int p, int **res)
 {
-	int cl = neighbors_cache_len[p];
-	if (cl) {
-		for (int i = 0; i < cl; i++)
-			res[i] = neighbors_cache[p][i];
-		return cl;
-	}
+	static int cache[N][5];
+
+	if (*cache[p])
+		goto ret;
 
 	bool seen[N] = {false};
-	int queue[1024] = {p};
+	int stack[1024] = {p};
 	int k = 1;
 	int n = 0;
 	while (k > 0) {
-		assert(k < LEN(queue));
+		assert(k < sizeof(stack) / sizeof(*stack));
 
 		k--;
-		int q = queue[k];
+		int q = stack[k];
 
 		if (seen[q])
 			continue;
 		seen[q] = true;
 
 		if (q != p && passage(q)) {
-			*res++ = q;
-			neighbors_cache[p][n++] = q;
+			cache[p][++n] = q;
 			continue;
 		}
 
 		for (int i = 0; i < 4; i++) {
 			int r = q + DIFF[i];
 			if (valid(r))
-				queue[k++] = r;
+				stack[k++] = r;
 		}
 	}
-	neighbors_cache_len[p] = n;
-	return n;
+	*cache[p] = n;
+ret:
+	*res = cache[p] + 1;
+	return *cache[p];
 }
 
-bool seen[N] = {false};
 int answer = 0;
 
-void search(int p, int d)
+void
+search(int p, int d)
 {
-	if (goal(p)) {
+	static bool seen[N];
+
+	if (p == goal) {
 		if (d > answer)
 			answer = d;
 		return;
@@ -137,8 +134,8 @@ void search(int p, int d)
 		return;
 	seen[p] = true;
 
-	int adj[4];
-	int n = neighbors(p, adj);
+	int *adj;
+	int n = neighbors(p, &adj);
 	for (int i = 0; i < n; i++) {
 		int q = adj[i];
 		search(q, d + distance(p, q));
@@ -146,22 +143,24 @@ void search(int p, int d)
 	seen[p] = false;
 }
 
-void prepare(void)
+void
+init(void)
 {
-	int i = 0;
-	for (int c; (c = getchar()) != EOF;) {
-		grid[i++] = c;
-		if (c == '\n') {
-			i--;
-			rows++;
-		}
-	}
-	cols = i / rows;
+	int i = 0, r = 0, c;
+	while ((c = getchar()) != EOF)
+		if (c == '\n')
+			r++;
+		else
+			grid[i++] = c;
+	rows = r;
+	cols = i / r;
+	goal = rows * cols - 2;
 }
 
-int main(void)
+int
+main(void)
 {
-	prepare();
+	init();
 	search(1, 0);
 	printf("%d\n", answer);
 	return 0;
